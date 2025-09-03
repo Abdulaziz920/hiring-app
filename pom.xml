@@ -28,7 +28,7 @@
   <distributionManagement>
     <repository>
         <id>Jenkins-04-Task-1</id>
-        <url>http://http://3.93.164.154:8081/repository/maven-releases/</url>
+         <url>http://3.93.164.154:8081/repository/maven-releases/</url>
     </repository>
 </distributionManagement>
 
