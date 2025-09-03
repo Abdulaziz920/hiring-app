@@ -2,20 +2,20 @@ pipeline {
     agent any
 
     environment {
-        NEXUS_CRED = 'nexus-creds'
-        TOMCAT_CRED = 'tomcat-credentials'
+        NEXUS_CRED = 'Nexux_server'
+        TOMCAT_CRED = 'Tomcat-credentials'
     }
 
     stages {
         stage('Checkout SCM') {
             steps {
-                git url: 'https://github.com/imrankhanmohammad257/sabear_simplecutomerapp.git', branch: 'feature-1.1'
+                git url: 'https://github.com/Abdulaziz920/hiring-app.git', branch: 'main'
             }
         }
 
         stage('Build') {
             steps {
-                tool name: 'Maven-3.8.4', type: 'maven'
+                tool name: 'Maven-3.9.11', type: 'MVN_HOME'
                 sh 'mvn clean package -DskipTests'
             }
         }
@@ -53,7 +53,7 @@ pipeline {
                     
                     curl -u $TOMCAT_USER:$TOMCAT_PASS \
                          -T $WAR_FILE \
-                         "http://54.145.142.96:8080/manager/text/deploy?path=/$WAR_NAME&update=true"
+                         "http://34.224.101.158:8080/manager/text/deploy?path=/$WAR_NAME&update=true"
                     '''
                 }
             }
@@ -64,7 +64,7 @@ pipeline {
                 slackSend(
                     channel: '#jenkins-integration',
                     color: 'good',
-                    message: "Hi Team, Jenkins pipeline for *Simple Customer App* has finished successfully! ✅\nDeployed by: Imran Khan"
+                    message: "Hi Team, Jenkins pipeline for *Declarative pipeline* has finished successfully! ✅\nDeployed by: Abdul Aziz"
                 )
             }
         }
