@@ -4,7 +4,7 @@
   <groupId>in.javahome</groupId>
   <artifactId>hiring</artifactId>
   <packaging>war</packaging>
-  <version>0.1-SNAPSHOT</version>
+  <version>0.1</version>
   <name>hiring Maven Webapp</name>
   <url>http://maven.apache.org</url>
   <dependencies>
@@ -31,11 +31,6 @@
          <url>http://3.93.164.154:8081/repository/maven-releases/</url>
     </repository>
 </distributionManagement>
-  <distributionManagement>
-  <snapshotRepository>
-    <id>nexus-snapshots</id>
-    <url>http://3.93.164.154:8081/repository/maven-snapshots/</url>
-  </snapshotRepository>
-  <repository>
+  
 
 </project>
