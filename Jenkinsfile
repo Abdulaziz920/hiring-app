@@ -1,47 +1,72 @@
 pipeline {
     agent any
-
-        environment {
-        IMAGE_TAG = "${BUILD_NUMBER}"
+    environment {
+        NEXUS_CRED = 'nexus-creds'
+        TOMCAT_CRED = 'tomcat-credentials'
     }
-
     stages {
-        
-       
-        stage('Docker Build') {
+        stage('Checkout SCM') {
             steps {
-                sh "docker build . -t sabair0509/hiring-app:$BUILD_NUMBER"
+                git url: 'https://github.com/Abdulaziz920/Abidd.git', branch: 'main'
             }
         }
-        stage('Docker Push') {
+        stage('Build') {
             steps {
-                withCredentials([string(credentialsId: 'docker-hub', variable: 'hubPwd')]) {
-                    sh "docker login -u sabair0509 -p ${hubPwd}"
-                    sh "docker push sabair0509/hiring-app:$BUILD_NUMBER"
+                tool name: 'Maven-3.8.4', type: 'maven'
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
-        stage('Checkout K8S manifest SCM'){
+        stage('Deploy to Nexus') {
             steps {
-              git branch: 'main', url: 'https://github.com/betawins/Hiring-app-argocd.git'
+                withCredentials([usernamePassword(credentialsId: "${NEXUS_CRED}", usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh '''
+                    mvn deploy -DskipTests \
+                        -Dnexus.username=$NEXUS_USER \
+                        -Dnexus.password=$NEXUS_PASS \
+                        --settings /var/lib/jenkins/.m2/settings.xml
+                    '''
+                }
             }
-        } 
-        stage('Update K8S manifest & push to Repo'){
-            steps {
-                script{
-                   withCredentials([usernamePassword(credentialsId: 'Github_server', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) { 
-                        sh '''
-                        cat /var/lib/jenkins/workspace/$JOB_NAME/dev/deployment.yaml
-                        sed -i "s/5/${BUILD_NUMBER}/g" /var/lib/jenkins/workspace/$JOB_NAME/dev/deployment.yaml
-                        cat /var/lib/jenkins/workspace/$JOB_NAME/dev/deployment.yaml
-                        git add .
-                        git commit -m 'Updated the deploy yaml | Jenkins Pipeline'
-                        git remote -v
-                        git push https://$GIT_USERNAME:$GIT_PASSWORD@github.com/betawins/Hiring-app-argocd.git main
-                        '''                        
-                      }
-                  }
-            }   
         }
+        stage('Deploy to Tomcat') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${TOMCAT_CRED}", usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
+                    sh '''
+                    WAR_FILE=$(ls target/*.war | head -n 1)
+                    curl -u $TOMCAT_USER:$TOMCAT_PASS \
+                         -T $WAR_FILE \
+                         http://54.145.142.96:8080/manager/text/deploy?path=/hiring&update=true
+                    '''
+                }
             }
-} 
+        }
+        stage('Slack Notification') {
+            steps {
+                slackSend(
+                    channel: '#jenkins-integration',
+                    color: 'good',
+                    message: "Hi Team, Jenkins pipeline for jenkins-04 task 2 *SIMPLE CUSTOMER APP* has finished successfully! :white_check_mark:\nDeployed by: Abdul Aziz"
+                )
+            }
+        }
+    }
+    post {
+        always {
+            echo 'Pipeline finished'
+        }
+        failure {
+            slackSend(
+                channel: '#jenkins-integration',
+                color: 'danger',
+                message: ":warning: Jenkins pipeline for *hiring-app* failed! Please check."
+            )
+        }
+    }
+}
