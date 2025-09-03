@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        NEXUS_CRED = 'Nexus_server'          // Fixed typo
+        NEXUS_CRED = 'Nexux_server'          // Fixed typo
         TOMCAT_CRED = 'Tomcat-credentials'
     }
 
