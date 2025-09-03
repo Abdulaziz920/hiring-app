@@ -15,9 +15,10 @@ pipeline {
 
        stage('Build') {
     steps {
-        script {
-            def mvnHome = tool name: 'MVN_HOME', type: 'maven'
-            env.PATH = "${mvnHome}/bin:${env.PATH}"
+        script 
+        {def mvnHome = tool name: 'Maven-3.9.11', type: 'maven'
+env.PATH = "${mvnHome}/bin:${env.PATH}"
+
         }
         sh 'mvn clean package -DskipTests'
     }
