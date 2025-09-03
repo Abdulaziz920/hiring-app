@@ -23,12 +23,17 @@ pipeline {
     }
 }
 
-
-       withCredentials([string(credentialsId: 'Sonar-Scanner', variable: 'SONAR_TOKEN')]) {
-    withSonarQubeEnv('sonar-scanner') {
-        sh "mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN -Dsonar.host.url=http://13.222.5.105:9000"
+stage('SonarQube Analysis') {
+    steps {
+        withCredentials([string(credentialsId: 'Sonar-Scanner', variable: 'SONAR_TOKEN')]) {
+            withSonarQubeEnv('sonar-scanner') {
+                sh 'mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN'
+            }
+        }
     }
 }
+
+      
 
 
        stage('Deploy to Nexus') {
