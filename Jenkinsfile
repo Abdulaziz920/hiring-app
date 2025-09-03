@@ -1,52 +1,61 @@
 pipeline {
     agent any
+
     environment {
         NEXUS_CRED = 'nexus-creds'
         TOMCAT_CRED = 'tomcat-credentials'
+        MVN_TOOL = 'MVN_HOME' // Use the exact Maven tool configured in Jenkins
+        SONAR_SERVER = 'SonarQube' // SonarQube server name in Jenkins
     }
+
     stages {
         stage('Checkout SCM') {
             steps {
                 git url: 'https://github.com/Abdulaziz920/Abidd.git', branch: 'main'
             }
         }
+
         stage('Build') {
             steps {
-                tool name: 'Maven-3.8.4', type: 'maven'
+                tool name: "${MVN_TOOL}", type: 'maven'
                 sh 'mvn clean package -DskipTests'
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
+                withSonarQubeEnv("${SONAR_SERVER}") {
                     sh 'mvn sonar:sonar'
                 }
             }
         }
+
         stage('Deploy to Nexus') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${NEXUS_CRED}", usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
                     sh '''
-                    mvn deploy -DskipTests \
-                        -Dnexus.username=$NEXUS_USER \
-                        -Dnexus.password=$NEXUS_PASS \
-                        --settings /var/lib/jenkins/.m2/settings.xml
+                        mvn deploy -DskipTests \
+                            -Dnexus.username=$NEXUS_USER \
+                            -Dnexus.password=$NEXUS_PASS \
+                            --settings /var/lib/jenkins/.m2/settings.xml
                     '''
                 }
             }
         }
+
         stage('Deploy to Tomcat') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${TOMCAT_CRED}", usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
                     sh '''
-                    WAR_FILE=$(ls target/*.war | head -n 1)
-                    curl -u $TOMCAT_USER:$TOMCAT_PASS \
-                         -T $WAR_FILE \
-                         http://54.145.142.96:8080/manager/text/deploy?path=/hiring&update=true
+                        WAR_FILE=$(ls target/*.war | head -n 1)
+                        curl -u $TOMCAT_USER:$TOMCAT_PASS \
+                             -T $WAR_FILE \
+                             http://54.145.142.96:8080/manager/text/deploy?path=/hiring&update=true
                     '''
                 }
             }
         }
+
         stage('Slack Notification') {
             steps {
                 slackSend(
@@ -57,6 +66,7 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             echo 'Pipeline finished'
@@ -70,3 +80,4 @@ pipeline {
         }
     }
 }
+
