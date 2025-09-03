@@ -13,51 +13,54 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                tool name: 'Maven-3.9.11', type: 'MVN_HOME'
-                sh 'mvn clean package -DskipTests'
-            }
+       stage('Build') {
+    steps {
+        script {
+            def mvnHome = tool name: 'Maven-3.9.11', type: 'maven'
+            env.PATH = "${mvnHome}/bin:${env.PATH}"
         }
+        sh 'mvn clean package -DskipTests'
+    }
+}
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh 'mvn sonar:sonar'
-                }
-            }
-        }
 
-        stage('Deploy to Nexus') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "${NEXUS_CRED}", usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                    sh '''
-                    mvn deploy -DskipTests \
-                        -Dnexus.username=$NEXUS_USER \
-                        -Dnexus.password=$NEXUS_PASS \
-                        --settings /var/lib/jenkins/.m2/settings.xml
-                    '''
-                }
-            }
+       withCredentials([string(credentialsId: 'Sonar-Scanner', variable: 'SONAR_TOKEN')]) {
+    withSonarQubeEnv('sonar-scanner') {
+        sh "mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN -Dsonar.host.url=http://13.222.5.105:9000"
+    }
+}
+
+
+       stage('Deploy to Nexus') {
+    steps {
+        script {
+            def mvnHome = tool name: 'Maven-3.9.11', type: 'maven'
+            env.PATH = "${mvnHome}/bin:${env.PATH}"
         }
+        sh '''
+            mvn deploy -DskipTests --settings /var/lib/jenkins/.m2/settings.xml
+        '''
+    }
+}
+
 
         stage('Deploy to Tomcat') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "${TOMCAT_CRED}", usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
-                    sh '''
-                    # Pick the latest WAR
-                    WAR_FILE=$(ls target/*.war | head -n 1)
-                    WAR_NAME=$(basename $WAR_FILE .war | tr '[:upper:]' '[:lower:]')
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'Tomcat-credentials', usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
+            sh '''
+            # Pick the latest WAR
+            WAR_FILE=$(ls target/*.war | head -n 1)
+            WAR_NAME=$(basename $WAR_FILE .war | tr '[:upper:]' '[:lower:]')
 
-                    echo "Deploying $WAR_FILE to Tomcat at context path /$WAR_NAME..."
-                    
-                    curl -u $TOMCAT_USER:$TOMCAT_PASS \
-                         -T $WAR_FILE \
-                         "http://34.224.101.158:8080/manager/text/deploy?path=/$WAR_NAME&update=true"
-                    '''
-                }
-            }
+            echo "Deploying $WAR_FILE to Tomcat at context path /$WAR_NAME..."
+            
+            curl -u $TOMCAT_USER:$TOMCAT_PASS \
+                 -T $WAR_FILE \
+                 "http://34.224.101.158:8080/manager/text/deploy?path=/$WAR_NAME&update=true"
+            '''
         }
+    }
+}
 
         stage('Slack Notification') {
             steps {
