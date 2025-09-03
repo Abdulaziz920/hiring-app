@@ -66,6 +66,8 @@ pipeline {
                         
                         curl -u $TOMCAT_USER:$TOMCAT_PASS \
                              -T $WAR_FILE \
+                  "http://34.224.101.158:8080/manager/text/deploy?path=/$WAR_NAME&update=true"
+
                     '''
                 }
             }
