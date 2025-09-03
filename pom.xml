@@ -1,12 +1,16 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>in.javahome</groupId>
   <artifactId>hiring</artifactId>
   <packaging>war</packaging>
   <version>0.1-SNAPSHOT</version>
   <name>hiring Maven Webapp</name>
   <url>http://maven.apache.org</url>
+
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -15,6 +19,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>
@@ -25,12 +30,20 @@
     </plugins>
     <finalName>hiring</finalName>
   </build>
+
+  <!-- Corrected distributionManagement -->
   <distributionManagement>
+    <!-- SNAPSHOT repo -->
+    <snapshotRepository>
+      <id>Jenkins-04-Task-1</id>
+      <url>http://3.93.164.154:8081/repository/maven-snapshots/</url>
+    </snapshotRepository>
+
+    <!-- RELEASE repo -->
     <repository>
-        <id>Jenkins-04-Task-1</id>
-         <url>http://3.93.164.154:8081/repository/maven-releases/</url>
+      <id>Jenkins-04-Task-1</id>
+      <url>http://3.93.164.154:8081/repository/maven-releases/</url>
     </repository>
-</distributionManagement>
-  
+  </distributionManagement>
 
 </project>
