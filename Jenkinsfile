@@ -56,7 +56,7 @@ pipeline {
         // -----------------------
         stage('Deploy to Tomcat') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${TOMCAT_CRED}", usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: "Tomcat-credentials", usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
                     sh '''
                         # Pick the latest WAR
                         WAR_FILE=$(ls target/*.war | head -n 1)
