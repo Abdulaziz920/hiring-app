@@ -54,24 +54,31 @@ pipeline {
         }
 
         // -----------------------
-        stage('Deploy to Tomcat') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "Tomcat-credentials", usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
-                    sh '''
-                        # Pick the latest WAR
-                        WAR_FILE=$(ls target/*.war | head -n 1)
-                        WAR_NAME=$(basename $WAR_FILE .war | tr '[:upper:]' '[:lower:]')
+       stage('Deploy to Tomcat') {
+    steps {
+        withCredentials([usernamePassword(credentialsId: "Tomcat-credentials", usernameVariable: 'TOMCAT_USER', passwordVariable: 'TOMCAT_PASS')]) {
+            sh '''
+                # Get the WAR file
+                WAR_FILE=$(ls target/*.war | head -n 1)
+                if [ ! -f "$WAR_FILE" ]; then
+                    echo "WAR file not found!"
+                    exit 1
+                fi
 
-                        echo "Deploying $WAR_FILE to Tomcat at context path /$WAR_NAME..."
-                        
-                        curl -u $TOMCAT_USER:$TOMCAT_PASS \
-                             -T $WAR_FILE \
-                  "http://34.229.166.230:8080/manager/text/deploy?path=/$WAR_NAME&update=true"
+                # Generate context path from WAR name
+                WAR_NAME=$(basename "$WAR_FILE" .war | tr '[:upper:]' '[:lower:]')
 
-                    '''
-                }
-            }
+                echo "Deploying $WAR_FILE to Tomcat at context path /$WAR_NAME..."
+
+                # Deploy WAR using Tomcat manager
+                curl -v --fail --show-error -u $TOMCAT_USER:$TOMCAT_PASS \
+                     -T "$WAR_FILE" \
+                     "http://34.229.166.230:8080/manager/text/deploy?path=/$WAR_NAME&update=true"
+            '''
         }
+    }
+}
+
 
         // -----------------------
         stage('Slack Notification') {
